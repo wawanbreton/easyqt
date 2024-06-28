@@ -3,9 +3,6 @@
 #include <QDebug>
 #include <QMetaEnum>
 #include <QObject>
-#include <typeinfo>
-
-#include "metatyperegisterer.h"
 
 namespace easyqt
 {
@@ -31,10 +28,7 @@ public: \
     inline friend QDebug operator<<(QDebug dbg, const Enum& value) \
     { \
         return dbg << staticMetaObject.enumerator(0).valueToKey(value); \
-    } \
-\
-private: \
-    static MetaTypeDebugRegisterer<Enum> _registerer;
+    }
 
 #define ENUM_TOSTRING() \
 public: \

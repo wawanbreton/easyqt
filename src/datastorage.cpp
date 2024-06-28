@@ -48,7 +48,7 @@ QString DataStorage::configFile(const QString& file_name)
     return configDir().absoluteFilePath(file_name);
 }
 
-QDir DataStorage::resourcesDir(const std::optional<ResourceType> resource_type)
+QDir DataStorage::resourcesDir(const std::optional<ResourceType::Enum> resource_type)
 {
     QDir dir = QDir(DataStorage::get()->resources_dir_);
     if (resource_type)
@@ -60,6 +60,9 @@ QDir DataStorage::resourcesDir(const std::optional<ResourceType> resource_type)
             case ResourceType::Icon:
                 sub_directory_name = "icons";
                 break;
+            case ResourceType::Shader:
+                sub_directory_name = "shaders";
+                break;
         }
 
         dir = QDir(dir.absoluteFilePath(sub_directory_name));
@@ -68,14 +71,14 @@ QDir DataStorage::resourcesDir(const std::optional<ResourceType> resource_type)
     return dir;
 }
 
-QString DataStorage::resourceFile(const QString& file_name, const std::optional<ResourceType> resource_type)
+QString DataStorage::resourceFile(const QString& file_name, const std::optional<ResourceType::Enum> resource_type)
 {
     return resourcesDir(resource_type).absoluteFilePath(file_name);
 }
 
 QString DataStorage::findResource(
     const QString& file_base_name,
-    const std::optional<ResourceType> resource_type,
+    const ResourceType::Enum resource_type,
     const QStringList& allowed_extensions)
 {
     QDir resources_dir = resourcesDir(resource_type);
@@ -88,7 +91,7 @@ QString DataStorage::findResource(
         }
     }
 
-    qWarning() << "No resource file found for name" << file_base_name;
+    qWarning() << "No resource file found for name" << file_base_name << "in" << resource_type;
     return QString();
 }
 

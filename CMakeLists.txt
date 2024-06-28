@@ -23,6 +23,8 @@ set(HEADER_FILES
     include/easyqt/logoutput.h
     include/easyqt/logpart.h
     include/easyqt/metatyperegisterer.h
+    include/easyqt/preferences.h
+    include/easyqt/resourcetype.h
     include/easyqt/singleton.h
     include/easyqt/writefilemode.h
 )
@@ -31,6 +33,7 @@ set(CPP_FILES
     src/datastorage.cpp
     src/file.cpp
     src/logger.cpp
+    src/preferences.cpp
 )
 
 add_library(easyqt SHARED

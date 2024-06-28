@@ -15,14 +15,4 @@ public:
     }
 };
 
-template<class T>
-class MetaTypeDebugRegisterer
-{
-public:
-    MetaTypeDebugRegisterer()
-    {
-        QMetaType::registerDebugStreamOperator<T>();
-    }
-};
-
 } // namespace easyqt
