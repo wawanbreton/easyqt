@@ -3,6 +3,7 @@
 #include <QDir>
 
 #include "easyqt_global.h"
+#include "resourcetype.h"
 #include "singleton.h"
 
 namespace easyqt
@@ -16,12 +17,6 @@ class EASYQT_EXPORT DataStorage : public QObject
     SINGLETON(DataStorage)
 
 public:
-    enum class ResourceType
-    {
-        Icon,
-    };
-
-public:
     static QDir tmpDir();
 
     static QString tmpFile(const QString& file_name);
@@ -30,14 +25,14 @@ public:
 
     static QString configFile(const QString& file_name);
 
-    static QDir resourcesDir(const std::optional<ResourceType> resource_type = std::nullopt);
+    static QDir resourcesDir(const std::optional<ResourceType::Enum> resource_type = std::nullopt);
 
     static QString
-        resourceFile(const QString& file_name, const std::optional<ResourceType> resource_type = std::nullopt);
+        resourceFile(const QString& file_name, const std::optional<ResourceType::Enum> resource_type = std::nullopt);
 
-    static QString findResource(
+    Q_INVOKABLE static QString findResource(
         const QString& file_base_name,
-        const std::optional<ResourceType> resource_type = std::nullopt,
+        const ResourceType::Enum resource_type,
         const QStringList& allowed_extensions = QStringList());
 
 private:
