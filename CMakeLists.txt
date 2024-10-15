@@ -17,12 +17,15 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 set(HEADER_FILES
     include/easyqt/easyqt_global.h
     include/easyqt/datastorage.h
+    include/easyqt/debug.h
     include/easyqt/enum.h
     include/easyqt/file.h
+    include/easyqt/json.h
     include/easyqt/logger.h
     include/easyqt/logoutput.h
     include/easyqt/logpart.h
     include/easyqt/metatyperegisterer.h
+    include/easyqt/parser.h
     include/easyqt/preferences.h
     include/easyqt/resourcetype.h
     include/easyqt/singleton.h
@@ -31,8 +34,11 @@ set(HEADER_FILES
 
 set(CPP_FILES
     src/datastorage.cpp
+    src/debug.cpp
     src/file.cpp
+    src/json.cpp
     src/logger.cpp
+    src/parser.cpp
     src/preferences.cpp
 )
 

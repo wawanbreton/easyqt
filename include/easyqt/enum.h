@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QMetaEnum>
 #include <QObject>
+#include <optional>
 
 namespace easyqt
 {
@@ -69,25 +70,17 @@ public: \
 
 #define ENUM_FROMSTRING() \
 public: \
-    inline static Enum fromString(const QString& text, bool* ok = nullptr) \
+    inline static std::optional<Enum> fromString(const QString& text) \
     { \
         QMetaEnum me = staticMetaObject.enumerator(0); \
         int value = me.keyToValue(text.toUtf8()); \
         if (value >= 0) \
         { \
-            if (ok) \
-            { \
-                *ok = true; \
-            } \
             return static_cast<Enum>(value); \
         } \
         else \
         { \
-            if (ok) \
-            { \
-                *ok = false; \
-            } \
-            return static_cast<Enum>(me.value(0)); \
+            return std::nullopt; \
         } \
     }
 

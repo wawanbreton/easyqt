@@ -16,6 +16,7 @@ public:
     {
         Icon,
         Shader,
+        Font,
     };
 
     ENUM_DEBUG()

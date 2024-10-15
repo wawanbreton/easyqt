@@ -63,6 +63,9 @@ QDir DataStorage::resourcesDir(const std::optional<ResourceType::Enum> resource_
             case ResourceType::Shader:
                 sub_directory_name = "shaders";
                 break;
+            case ResourceType::Font:
+                sub_directory_name = "fonts";
+                break;
         }
 
         dir = QDir(dir.absoluteFilePath(sub_directory_name));

@@ -5,78 +5,75 @@
 // clang-format off
 
 #define SINGLETON(Class) \
-    public: \
-        static void init(QObject *parent); \
+public: \
+    static void init(QObject *parent); \
 \
-        static void destroy(); \
+    static void destroy(); \
 \
-        static const Class *get() { return instance_; } \
+    static const Class *get() { return instance_; } \
 \
-        static Class *access() { return instance_; } \
+    static Class *access() { return instance_; } \
 \
-        virtual ~Class(); \
+    virtual ~Class(); \
 \
-    private: \
-        explicit Class(QObject *parent = nullptr); \
+protected: \
+    explicit Class(QObject *parent = nullptr); \
 \
-    private: \
-        static Class *instance_;
+private: \
+    static Class *instance_;
 
 #define SINGLETON_WITH_1_PARAM(Class, param) \
-    public: \
-        static void init(QObject *parent, param); \
+public: \
+    static void init(QObject *parent, param); \
 \
-        static const Class *get() { return instance_; } \
+    static const Class *get() { return instance_; } \
 \
-        static Class *access() { return instance_; } \
+    static Class *access() { return instance_; } \
 \
-        virtual ~Class(); \
+    virtual ~Class(); \
 \
-    private: \
-        explicit Class(QObject *parent, param); \
+private: \
+    explicit Class(QObject *parent, param); \
 \
-    private: \
-        static Class *instance_;
+private: \
+    static Class *instance_;
 
 #define SINGLETON_WITH_2_PARAMS(Class, param1, param2) \
-    public: \
-        static void init(QObject *parent, param1, param2); \
+public: \
+    static void init(QObject *parent, param1, param2); \
 \
-        static const Class *get() { return instance_; } \
+    static const Class *get() { return instance_; } \
 \
-        static Class *access() { return instance_; } \
+    static Class *access() { return instance_; } \
 \
-        virtual ~Class(); \
+    virtual ~Class(); \
 \
-    private: \
-        explicit Class(QObject *parent, param1, param2); \
+private: \
+    explicit Class(QObject *parent, param1, param2); \
 \
-    private: \
-        static Class *instance_;
+private: \
+    static Class *instance_;
 
 #define SINGLETON_INHERITABLE(Class) \
-    public: \
-        virtual ~Class(); \
+public: \
+    virtual ~Class(); \
 \
-        static const Class* get() { return instance_; } \
+    static const Class* get() { return instance_; } \
 \
-        static Class* access() { return instance_; } \
+    static Class* access() { return instance_; } \
 \
-    protected: \
-        explicit Class(QObject *parent = nullptr); \
+protected: \
+    explicit Class(QObject *parent = nullptr); \
 \
-        static void init(Class* instance); \
+    static void init(Class* instance); \
 \
-    private: \
-        static Class* instance_;
+private: \
+    static Class* instance_;
 
 #define SINGLETON_IMPL_COMMON(Class) \
 Class *Class::instance_ = nullptr; \
 
-
-#define SINGLETON_IMPL(Class) \
-SINGLETON_IMPL_COMMON(Class) \
-\
+#define SINGLETON_INIT(Class) \
 void Class::init(QObject *parent) \
 { \
     if(!instance_) \
@@ -90,15 +87,23 @@ void Class::init(QObject *parent) \
         qCritical() << "There is already a Class instance"; \
     } \
 } \
-\
+
+#define SINGLETON_DESTROY(Class) \
 void Class::destroy() \
 { \
-    if(instance_) \
+     if(instance_) \
     { \
-    delete instance_; \
-    instance_ = nullptr; \
+         delete instance_; \
+         instance_ = nullptr; \
     } \
 }
+
+#define SINGLETON_IMPL(Class) \
+SINGLETON_IMPL_COMMON(Class) \
+\
+SINGLETON_INIT(Class) \
+\
+SINGLETON_DESTROY(Class)
 
 #define SINGLETON_IMPL_WITH_1_PARAM(Class, param, givenParam) \
 SINGLETON_IMPL_COMMON(Class) \
@@ -183,7 +188,7 @@ void Class::init(QObject *parent) \
     } \
 }
 
-#define SINGLETON_DESTROY(Class) \
+#define SINGLETON_DESTROY_IMPL(Class) \
 if(instance_ == this) \
 { \
     instance_ = nullptr; \
@@ -196,7 +201,7 @@ else \
 #define SINGLETON_DESTRUCTOR_IMPL(Class) \
 Class::~Class() \
 { \
-    SINGLETON_DESTROY(Class) \
+    SINGLETON_DESTROY_IMPL(Class) \
 }
 
 // clang-format on
