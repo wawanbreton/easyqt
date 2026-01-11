@@ -6,7 +6,7 @@ set(version 0.0.1)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CMakePackageConfigHelpers)
@@ -27,9 +27,11 @@ set(HEADER_FILES
     include/easyqt/metatyperegisterer.h
     include/easyqt/parser.h
     include/easyqt/preferences.h
+    include/easyqt/qobject_helper.h
     include/easyqt/resourcetype.h
     include/easyqt/singleton.h
     include/easyqt/writefilemode.h
+    include/easyqt/lazypointer.h
 )
 
 set(CPP_FILES
