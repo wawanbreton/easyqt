@@ -1,61 +1,49 @@
 #include "easyqt/json.h"
 
-#include <QJsonObject>
+#include <QJsonArray>
 #include <QMetaProperty>
 
 
-void Json::mapValuesToObjectProperties(const QJsonObject& json_object, QObject* object)
-{
-    const QMetaObject* meta_object = object->metaObject();
-
-    for (auto iterator = json_object.constBegin(); iterator != json_object.constEnd(); ++iterator)
-    {
-        const QString json_value_name = iterator.key();
-
-        const int property_index = meta_object->indexOfProperty(json_value_name.toLocal8Bit().data());
-        if (property_index >= 0)
-        {
-            QMetaProperty property = meta_object->property(property_index);
-
-#warning this should be done in the parser, but how to give arguments ?
-            if (property.typeId() == qMetaTypeId<QDateTime>())
-            {
-                QDateTime date_time = QDateTime::fromString(iterator.value().toString(), "yyyy-MM-dd hh:mm");
-                date_time.setTimeSpec(Qt::UTC);
-                property.write(object, date_time);
-            }
-            else
-            {
-                property.write(object, iterator.value().toVariant());
-            }
-        }
-    }
-}
-
 template<>
-std::optional<QString> Json::loadValue(
+std::optional<QJsonValue> easyqt::Json::loadProperty(
     const QJsonObject& json_object,
     const QString& property_name,
     const QString& debug_caller,
     WarnIfNotFound warn_not_found)
 {
     auto iterator = json_object.constFind(property_name);
-    if (iterator != json_object.constEnd())
+    if (iterator == json_object.constEnd())
     {
-        const QJsonValue& json_value = iterator.value();
-        if (json_value.isString())
+        if (warn_not_found == WarnIfNotFound::Yes)
         {
-            return json_value.toString();
+            qWarning() << debug_caller << "Could not find the required property" << property_name;
         }
-        else
-        {
-            qWarning() << debug_caller << "Value for attribute" << property_name << "is not a string as expected";
-        }
-    }
-    else if (warn_not_found == WarnIfNotFound::Yes)
-    {
-        qWarning() << debug_caller << "Could not find the required attribute" << property_name;
+        return std::nullopt;
     }
 
-    return std::nullopt;
+    return iterator.value();
+}
+
+template<>
+std::optional<QJsonArray> easyqt::Json::loadValue(const QJsonValue& json_value, const QString& debug_caller)
+{
+    if (! json_value.isArray())
+    {
+        qWarning() << debug_caller << "Value" << json_value << "is not an array as expected";
+        return std::nullopt;
+    }
+
+    return json_value.toArray();
+}
+
+template<>
+std::optional<QJsonObject> easyqt::Json::loadValue(const QJsonValue& json_value, const QString& debug_caller)
+{
+    if (! json_value.isObject())
+    {
+        qWarning() << debug_caller << "Value" << json_value << "is not an object as expected";
+        return std::nullopt;
+    }
+
+    return json_value.toObject();
 }

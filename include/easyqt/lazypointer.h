@@ -100,6 +100,19 @@ public:
         return content_.pointer;
     }
 
+    QUuid getUuid() const
+    {
+        switch (content_type_)
+        {
+            case ContentType::None:
+                return QUuid();
+            case ContentType::Uuid:
+                return content_.uuid;
+            case ContentType::Pointer:
+                return content_.pointer ? content_.pointer->getUuid() : QUuid();
+        }
+    }
+
 private:
     enum class ContentType
     {

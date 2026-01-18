@@ -14,39 +14,36 @@ include(CMakePackageConfigHelpers)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
-set(HEADER_FILES
+add_library(easyqt SHARED
+    include/easyqt/communication/commands/commandheader.h
+    include/easyqt/communication/commands/command.h src/communication/commands/command.cpp
+    include/easyqt/communication/core/abstractcommanddatastreamer.h src/communication/core/abstractcommanddatastreamer.cpp
+    include/easyqt/communication/core/abstractcommandsqueue.h src/communication/core/abstractcommandsqueue.cpp
+    include/easyqt/communication/core/abstractcommunicationinterface.h src/communication/core/abstractcommunicationinterface.cpp
+    include/easyqt/communication/core/abstractdevicecommandsqueue.h src/communication/core/abstractdevicecommandsqueue.cpp
+    include/easyqt/communication/core/abstractsimulatedcommandsqueue.h src/communication/core/abstractsimulatedcommandsqueue.cpp
+    include/easyqt/communication/core/commanddatatype.h
+    include/easyqt/communication/dataparseresult.h
+
+    include/easyqt/bitfield.h src/bitfield.cpp
+    include/easyqt/datastorage.h src/datastorage.cpp
+    include/easyqt/debug.h src/debug.cpp
     include/easyqt/easyqt_global.h
-    include/easyqt/datastorage.h
-    include/easyqt/debug.h
     include/easyqt/enum.h
-    include/easyqt/file.h
-    include/easyqt/json.h
-    include/easyqt/logger.h
+    include/easyqt/file.h src/file.cpp
+    include/easyqt/json.h src/json.cpp
+    include/easyqt/logger.h src/logger.cpp
     include/easyqt/logoutput.h
     include/easyqt/logpart.h
     include/easyqt/metatyperegisterer.h
-    include/easyqt/parser.h
-    include/easyqt/preferences.h
+    include/easyqt/parser.h src/parser.cpp
+    include/easyqt/preferences.h src/preferences.cpp
     include/easyqt/qobject_helper.h
     include/easyqt/resourcetype.h
     include/easyqt/singleton.h
+    include/easyqt/slotreceiver.h src/slotreceiver.cpp
     include/easyqt/writefilemode.h
     include/easyqt/lazypointer.h
-)
-
-set(CPP_FILES
-    src/datastorage.cpp
-    src/debug.cpp
-    src/file.cpp
-    src/json.cpp
-    src/logger.cpp
-    src/parser.cpp
-    src/preferences.cpp
-)
-
-add_library(easyqt SHARED
-  ${HEADER_FILES}
-  ${CPP_FILES}
 )
 
 target_link_libraries(easyqt PRIVATE Qt${QT_VERSION_MAJOR}::Core)
@@ -60,6 +57,7 @@ target_compile_definitions(easyqt PRIVATE EASYQT_LIBRARY)
 
 target_include_directories(easyqt PRIVATE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include/easyqt"
 )
 
 target_include_directories(easyqt PUBLIC
@@ -74,7 +72,7 @@ install(TARGETS easyqt
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(FILES ${HEADER_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/easyqt)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(EXPORT easyqt
         FILE easyqt.cmake
