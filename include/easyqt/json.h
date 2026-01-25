@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QMetaProperty>
 #include <QVariant>
+#include <concepts>
 
 #include "easyqt/parser.h"
 
@@ -170,7 +171,11 @@ std::optional<typename EnumClass::Enum> easyqt::Json::loadPropertyEnum(
 template<typename Type>
 QJsonValue easyqt::Json::saveValue(const Type& value)
 {
-    if constexpr (std::is_constructible_v<QJsonValue, Type>)
+    if constexpr (std::is_integral_v<Type>)
+    {
+        return QJsonValue(static_cast<qint64>(value));
+    }
+    else if constexpr (std::is_constructible_v<QJsonValue, Type>)
     {
         return QJsonValue(value); // Constructor exists, use it
     }
@@ -247,7 +252,7 @@ ContainerType<typename EnumClass::Enum> easyqt::Json::loadPropertyArrayEnum(
 
     std::optional<QJsonArray> json_array
         = loadProperty<QJsonArray>(json_object, property_name, debug_caller, warn_not_found);
-    if (json_array.has_value())
+    if (! json_array.has_value())
     {
         return result;
     }
