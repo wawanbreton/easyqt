@@ -42,14 +42,15 @@ void AbstractCommunicationInterface::cancelCurrentCommand()
     _queue->cancelCurrentCommand();
 }
 
-Command* AbstractCommunicationInterface::makeRequest(const quint32 id, const int timeout)
+Command*
+    AbstractCommunicationInterface::makeRequest(const std::shared_ptr<const CommandHeader>& header, const int timeout)
 {
-    return _queue->makeCommand(id, timeout);
+    return _queue->makeCommand(header, timeout);
 }
 
-Command* AbstractCommunicationInterface::makeEvent(const quint32 id)
+Command* AbstractCommunicationInterface::makeEvent(const std::shared_ptr<const CommandHeader>& header)
 {
-    return _queue->makeCommand(id, -1);
+    return _queue->makeCommand(header, -1);
 }
 
 void AbstractCommunicationInterface::sendRequest(

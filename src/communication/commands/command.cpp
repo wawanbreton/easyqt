@@ -6,21 +6,20 @@
 #include "easyqt/communication/commands/commandheader.h"
 
 
-Command::Command(CommandHeader* header, QObject* parent)
+Command::Command(CommandHeader::ConstPtr header, QObject* parent)
     : QObject(parent)
-    , _header(header)
+    , header_(header)
 {
-    _header->setParent(this);
 }
 
 void Command::setTimeout(const int timeout)
 {
     if (timeout > 0)
     {
-        _timer = new QTimer(this);
-        _timer->setSingleShot(true);
-        _timer->setInterval(timeout);
-        connect(_timer, &QTimer::timeout, this, &Command::error);
+        timer_ = new QTimer(this);
+        timer_->setSingleShot(true);
+        timer_->setInterval(timeout);
+        connect(timer_, &QTimer::timeout, this, &Command::error);
     }
 }
 
@@ -47,9 +46,9 @@ void Command::onSent()
 {
     emit sent();
 
-    if (_timer)
+    if (timer_)
     {
-        _timer->start();
+        timer_->start();
     }
 }
 
@@ -65,7 +64,8 @@ QDebug operator<<(QDebug dbg, const Command* command)
 {
     QDebugStateSaver saver(dbg);
 
-    dbg.noquote().nospace() << "Command(" << command->_header << ", expectsAnswer:" << command->expectsAnswer() << ")";
+    dbg.noquote().nospace() << "Command(" << command->header_.get() << ", expectsAnswer:" << command->expectsAnswer()
+                            << ")";
 
     return dbg;
 }

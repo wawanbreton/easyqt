@@ -1,8 +1,7 @@
 #pragma once
 
-enum class DataParseResult
+enum class DataParseError
 {
-    Success,
     NotEnoughData,
     WrongData
 };

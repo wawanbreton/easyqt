@@ -19,13 +19,13 @@ public:
      *  @param header The command header
      *  @param timeout The command answering timeout, or <=0 if there is no timeout
      *  @param parent The parent container */
-    explicit Command(CommandHeader* header, QObject* parent = nullptr);
+    explicit Command(std::shared_ptr<const CommandHeader> header, QObject* parent = nullptr);
 
     void setTimeout(const int timeout);
 
-    const CommandHeader* getHeader() const
+    std::shared_ptr<const CommandHeader> getHeader() const
     {
-        return _header;
+        return header_;
     }
 
     virtual std::optional<QByteArray> streamData(CommandDataType::Enum dataType) const;
@@ -41,12 +41,12 @@ public:
 
     const bool expectsAnswer() const
     {
-        return _expectsAnswer;
+        return expects_answer_;
     }
 
-    void setExpectsAnswer(bool expectsAnswer)
+    void setExpectsAnswer(bool expects_answer)
     {
-        _expectsAnswer = expectsAnswer;
+        expects_answer_ = expects_answer;
     }
 
     friend QDebug operator<<(QDebug dbg, const Command* command);
@@ -62,7 +62,7 @@ signals:
     void error();
 
 private:
-    CommandHeader* const _header;
-    QTimer* _timer{ nullptr };
-    bool _expectsAnswer{ false };
+    std::shared_ptr<const CommandHeader> header_;
+    QTimer* timer_{ nullptr };
+    bool expects_answer_{ false };
 };

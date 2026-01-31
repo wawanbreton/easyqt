@@ -1,9 +1,10 @@
 #pragma once
 
 #include <QIODevice>
+#include <expected>
 
 #include "easyqt/communication/core/abstractcommandsqueue.h"
-#include "easyqt/communication/dataparseresult.h"
+#include "easyqt/communication/dataparseerror.h"
 
 
 /*! @brief Abstract class that manages commands sent through a QIODevice. The commands can be
@@ -34,17 +35,27 @@ public:
     virtual bool sendCommandImpl(Command* command, CommandDataType::Enum dataType) override;
 
 protected:
+    struct DataParseResult
+    {
+        quint16 consumedBytes;
+        std::shared_ptr<const CommandHeader> header;
+        QByteArray commandRawData;
+    };
+
+protected:
     /*! @brief Create the appropriate request command when the given header has been received and no actual request
      *         could be matched to it
      *  @param header The received header
      *  @return The appropriate request command, or null if this header is not recognized */
-    virtual Command* makeRequestCommand(const CommandHeader* header);
+    virtual Command* makeRequestCommand(const std::shared_ptr<const CommandHeader>& header);
 
     /*! @brief Children classes should implement this method to generate the full data to be
      *         sent to the device (by adding headers and footers for example)
      *  @param header The header of the command to be send
      *  @param commandRawData The streamed command data */
-    virtual QByteArray streamCommandData(const CommandHeader* header, const QByteArray& commandRawData) const = 0;
+    virtual QByteArray
+        streamCommandData(const std::shared_ptr<const CommandHeader>& header, const QByteArray& commandRawData) const
+        = 0;
 
     /*! @brief Children classes should implement this method to parse raw received data, and
      *         send a proper signal at destination of the commands queue when relevant command
@@ -56,12 +67,7 @@ protected:
      *  @param commandRawData The returned raw command data
      *  @return The result indicating whether the parsing was complete, incomplete or in error
      */
-    virtual DataParseResult unstreamReceivedData(
-        const QByteArray& buffer,
-        quint16& consumedBytes,
-        CommandHeader*& header,
-        QByteArray& commandRawData) const
-        = 0;
+    virtual std::expected<DataParseResult, DataParseError> unstreamReceivedData(const QByteArray& buffer) const = 0;
 
     /*! @brief Children classes should implement this method to try and fix the buffer when
      *         something wrong is detected during communication. For example, looking for the
@@ -74,18 +80,16 @@ protected:
      *         waiting for an answer, for which the given header could be the answser
      *  @param header The received command header
      *  @return The existing command matching the answer, or nullptr if there is none */
-    Command* matchAnsweredCommand(const CommandHeader* header);
+    Command* matchAnsweredCommand(const std::shared_ptr<const CommandHeader>& header);
 
-    virtual void onDeviceBytesWritten()
-    {
-    }
+    virtual void onDeviceBytesWritten();
 
 private:
     void onReadyRead();
 
     void parseBuffer();
 
-    void treatCommandData(const CommandHeader* header, const QByteArray& commandRawData);
+    void treatCommandData(const std::shared_ptr<const CommandHeader>& header, const QByteArray& commandRawData);
 
 private:
     QIODevice* const _device{ nullptr };

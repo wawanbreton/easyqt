@@ -43,3 +43,11 @@ bool is_instance(const QObject* object)
         qCritical() << "There is no sender"; \
     } \
     else
+
+#define IF_CAST_SHARED_PTR(Class, variable, pointer) \
+    auto variable = std::dynamic_pointer_cast<Class>(pointer); \
+    if (Q_UNLIKELY(! variable)) \
+    { \
+        qCritical() << "Object is not an instance of" << typeid(Class).name(); \
+    } \
+    else

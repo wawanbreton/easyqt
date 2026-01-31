@@ -4,6 +4,7 @@
 
 #include "bitfield.h"
 #include "communication/commands/command.h"
+#include "communication/commands/commandheader.h"
 
 
 AbstractDeviceCommandsQueue::AbstractDeviceCommandsQueue(
@@ -49,7 +50,7 @@ bool AbstractDeviceCommandsQueue::sendCommandImpl(Command* command, CommandDataT
     return success;
 }
 
-Command* AbstractDeviceCommandsQueue::makeRequestCommand(const CommandHeader* header)
+Command* AbstractDeviceCommandsQueue::makeRequestCommand(const CommandHeader::ConstPtr& header)
 {
     Q_UNUSED(header);
     return nullptr;
@@ -105,7 +106,7 @@ void AbstractDeviceCommandsQueue::fixBufferStandard(
     }
 }
 
-Command* AbstractDeviceCommandsQueue::matchAnsweredCommand(const CommandHeader* header)
+Command* AbstractDeviceCommandsQueue::matchAnsweredCommand(const CommandHeader::ConstPtr& header)
 {
     QVector<Command*> candidate_commands;
     if (handleParallelCommands())
@@ -144,32 +145,35 @@ void AbstractDeviceCommandsQueue::parseBuffer()
             qDebug() << "Parsing" << BitField::toHex(_buffer, ':', 16);
         }
 
-        CommandHeader* header = nullptr;
-        QByteArray commandRawData;
-        quint16 consumedBytes;
-        DataParseResult result = unstreamReceivedData(_buffer, consumedBytes, header, commandRawData);
+        std::expected<DataParseResult, DataParseError> result = unstreamReceivedData(_buffer);
 
-        switch (result)
+        if (result)
         {
-            case DataParseResult::Success:
-                _buffer = _buffer.mid(consumedBytes);
-                treatCommandData(header, commandRawData);
-                parseBuffer(); // Do it again in case many commands have stacked in the buffer
-                break;
-            case DataParseResult::NotEnoughData:
-                // Not much to do here, just wait for more data
-                break;
-            case DataParseResult::WrongData:
-                // Data stream is corrupted, clear everything
-                qWarning() << "Corrupted data, fixing buffer";
-                fixBuffer(_buffer);
-                parseBuffer(); // Try again in case there is some remaining data
-                break;
+            _buffer = _buffer.mid(result->consumedBytes);
+            treatCommandData(result->header, result->commandRawData);
+            parseBuffer(); // Do it again in case many commands have stacked in the buffer
+        }
+        else
+        {
+            switch (result.error())
+            {
+                case DataParseError::NotEnoughData:
+                    // Not much to do here, just wait for more data
+                    break;
+                case DataParseError::WrongData:
+                    // Data stream is corrupted, clear everything
+                    qWarning() << "Corrupted data, fixing buffer";
+                    fixBuffer(_buffer);
+                    parseBuffer(); // Try again in case there is some remaining data
+                    break;
+            }
         }
     }
 }
 
-void AbstractDeviceCommandsQueue::treatCommandData(const CommandHeader* header, const QByteArray& commandRawData)
+void AbstractDeviceCommandsQueue::treatCommandData(
+    const CommandHeader::ConstPtr& header,
+    const QByteArray& commandRawData)
 {
     Command* command = matchAnsweredCommand(header);
     CommandDataType::Enum dataType;
@@ -185,7 +189,7 @@ void AbstractDeviceCommandsQueue::treatCommandData(const CommandHeader* header, 
         command = makeRequestCommand(header);
         if (! command)
         {
-            qWarning() << "Unable to create request command for header" << header;
+            qWarning() << "Unable to create request command for header" << header.get();
             return;
         }
     }
@@ -202,4 +206,8 @@ void AbstractDeviceCommandsQueue::treatCommandData(const CommandHeader* header, 
         qWarning() << "Error when parsing data for command" << command;
         command->manualFail();
     }
+}
+
+void AbstractDeviceCommandsQueue::onDeviceBytesWritten()
+{
 }

@@ -3,11 +3,11 @@
 #include <QDebug>
 
 
-QDebug operator<<(QDebug dbg, const CommandHeader* command)
+QDebug operator<<(QDebug dbg, const std::shared_ptr<const CommandHeader>& header)
 {
     QDebugStateSaver saver(dbg);
 
-    dbg.noquote() << "Header(" << command->toString() << ")";
+    dbg.noquote() << "Header(" << header->toString() << ")";
 
     return dbg;
 }

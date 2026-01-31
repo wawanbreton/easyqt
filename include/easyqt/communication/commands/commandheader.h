@@ -1,24 +1,21 @@
 #pragma once
 
-#include <QObject>
+#include <QByteArray>
 
-#warning verifier les constructions/destructions, et/ou utiliser un shared_ptr
-class CommandHeader : public QObject
+class CommandHeader
 {
 public:
-    explicit CommandHeader(QObject* parent = nullptr)
-        : QObject(parent)
-    {
-    }
+    using Ptr = std::shared_ptr<CommandHeader>;
+    using ConstPtr = std::shared_ptr<const CommandHeader>;
 
-    // Required to mark the class as polymorphic
-    virtual ~CommandHeader() = default;
+public:
+    explicit CommandHeader() = default;
 
-    virtual bool matches(const CommandHeader* other) const = 0;
+    virtual bool matches(const std::shared_ptr<const CommandHeader>& header) const = 0;
 
     virtual std::optional<QByteArray> streamData() const = 0;
 
     virtual QString toString() const = 0;
 
-    friend QDebug operator<<(QDebug dbg, const CommandHeader* header);
+    friend QDebug operator<<(QDebug dbg, const std::shared_ptr<const CommandHeader>& header);
 };

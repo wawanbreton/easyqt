@@ -6,7 +6,7 @@ set(version 0.0.1)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CMakePackageConfigHelpers)
@@ -17,14 +17,12 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 add_library(easyqt SHARED
     include/easyqt/communication/commands/command.h src/communication/commands/command.cpp
     include/easyqt/communication/commands/commandheader.h src/communication/commands/commandheader.cpp
-    include/easyqt/communication/commands/idbasedheader.h src/communication/commands/idbasedheader.cpp
-
     include/easyqt/communication/core/abstractcommandsqueue.h src/communication/core/abstractcommandsqueue.cpp
     include/easyqt/communication/core/abstractcommunicationinterface.h src/communication/core/abstractcommunicationinterface.cpp
     include/easyqt/communication/core/abstractdevicecommandsqueue.h src/communication/core/abstractdevicecommandsqueue.cpp
     include/easyqt/communication/core/abstractsimulatedcommandsqueue.h src/communication/core/abstractsimulatedcommandsqueue.cpp
     include/easyqt/communication/core/commanddatatype.h
-    include/easyqt/communication/dataparseresult.h
+    include/easyqt/communication/dataparseerror.h
 
     include/easyqt/bitfield.h src/bitfield.cpp
     include/easyqt/datastorage.h src/datastorage.cpp

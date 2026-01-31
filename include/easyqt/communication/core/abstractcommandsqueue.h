@@ -3,10 +3,10 @@
 #include <QObject>
 #include <QQueue>
 
-#include "easyqt/communication/commands/commandheader.h"
 #include "easyqt/communication/core/commanddatatype.h"
 
 class Command;
+class CommandHeader;
 
 /*! @brief Abstract class to manage a commands queue.
  *
@@ -36,7 +36,7 @@ public:
      *  @param timeout The command answering timeout : <0 for no timeout,
      *                                                 =0 for default timeout
      *                                                 >0 for a specific timeout */
-    Command* makeCommand(const quint32 id, const int timeout);
+    Command* makeCommand(const std::shared_ptr<const CommandHeader>& header, const int timeout);
 
     void append(Command* command);
 
@@ -60,9 +60,7 @@ signals:
     void commandError();
 
 protected:
-    virtual Command* makeCommandImpl(CommandHeader* header);
-
-    virtual CommandHeader* makeHeader(const quint32 commandId) const = 0;
+    virtual Command* makeCommandImpl(const std::shared_ptr<const CommandHeader>& header);
 
     virtual bool sendCommandImpl(Command* command, CommandDataType::Enum dataType) = 0;
 

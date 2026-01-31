@@ -3,7 +3,6 @@
 #include <QDebug>
 
 #include "communication/commands/command.h"
-#include "communication/commands/idbasedheader.h"
 
 // #define DISPLAY_COMMANDS 1
 
@@ -24,10 +23,10 @@ AbstractCommandsQueue::~AbstractCommandsQueue()
     }
 }
 
-Command* AbstractCommandsQueue::makeCommand(const quint32 id, const int timeout)
+Command* AbstractCommandsQueue::makeCommand(const std::shared_ptr<const CommandHeader>& header, const int timeout)
 {
-    Command* command = makeCommandImpl(makeHeader(id));
-    if (timeout >= 0)
+    Command* command = makeCommandImpl(header);
+    if (command && timeout >= 0)
     {
         command->setTimeout(timeout == 0 ? _defaultTimeout : timeout);
     }
@@ -75,7 +74,7 @@ void AbstractCommandsQueue::cancelCurrentCommand()
     }
 }
 
-Command* AbstractCommandsQueue::makeCommandImpl(CommandHeader* header)
+Command* AbstractCommandsQueue::makeCommandImpl(const std::shared_ptr<const CommandHeader>& header)
 {
     return new Command(header, this);
 }

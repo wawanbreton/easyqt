@@ -10,6 +10,7 @@ using SlotNoArgType = std::function<void()>;
 class QIODevice;
 
 class Command;
+class CommandHeader;
 class AbstractCommandsQueue;
 
 /*! @brief Basic class for all communication interfaces. The basic job of an interface is to
@@ -42,9 +43,9 @@ public:
 
     virtual void cancelCurrentCommand();
 
-    Command* makeRequest(const quint32 id, const int timeout = 0);
+    Command* makeRequest(const std::shared_ptr<const CommandHeader>& header, const int timeout = 0);
 
-    Command* makeEvent(const quint32 id);
+    Command* makeEvent(const std::shared_ptr<const CommandHeader>& header);
 
 protected:
     /*! @brief Constructor
