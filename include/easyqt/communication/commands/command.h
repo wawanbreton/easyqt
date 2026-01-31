@@ -4,8 +4,9 @@
 #include <QTimer>
 #include <QVariant>
 
-#include "easyqt/communication/commands/commandheader.h"
 #include "easyqt/communication/core/commanddatatype.h"
+
+class CommandHeader;
 
 /*! @brief Class for all communication commands, whether simulated or physical. It is actually just
  *         a container for request/answer data and a context-object for signal connection. */
@@ -18,38 +19,18 @@ public:
      *  @param header The command header
      *  @param timeout The command answering timeout, or <=0 if there is no timeout
      *  @param parent The parent container */
-    explicit Command(const CommandHeader* header, int error, QObject* parent = nullptr);
+    explicit Command(CommandHeader* header, QObject* parent = nullptr);
 
-    virtual ~Command();
+    void setTimeout(const int timeout);
 
     const CommandHeader* getHeader() const
     {
         return _header;
     }
 
-    const quint32& getId() const
-    {
-        return getHeader()->getId();
-    }
+    virtual std::optional<QByteArray> streamData(CommandDataType::Enum dataType) const;
 
-    QList<QVariant> getData(const CommandDataType::Enum& dataType, bool* dataPresent = nullptr) const;
-
-    QList<QVariant> getRequestData() const
-    {
-        return getData(CommandDataType::Request);
-    }
-
-    bool hasData(CommandDataType::Enum dataType) const
-    {
-        return _data.contains(dataType);
-    }
-
-    void setData(const CommandDataType::Enum dataType, const QList<QVariant>& data);
-
-    void setAnswer(const QList<QVariant>& data)
-    {
-        return setData(CommandDataType::Answer, data);
-    }
+    bool unstreamCommandData(const QByteArray& rawData, CommandDataType::Enum dataType);
 
     void onSent();
 
@@ -58,7 +39,7 @@ public:
         emit error();
     }
 
-    const bool& expectsAnswer() const
+    const bool expectsAnswer() const
     {
         return _expectsAnswer;
     }
@@ -70,16 +51,18 @@ public:
 
     friend QDebug operator<<(QDebug dbg, const Command* command);
 
+protected:
+    virtual bool unstreamCommandDataImpl(const QByteArray& rawData, CommandDataType::Enum dataType);
+
 signals:
     void sent();
 
-    void answerReceived(const QList<QVariant>& dataAnswer, const QList<QVariant>& dataRequest);
+    void answerReceived();
 
     void error();
 
 private:
-    const CommandHeader* _header;
-    QMap<CommandDataType::Enum, QList<QVariant>> _data;
+    CommandHeader* const _header;
     QTimer* _timer{ nullptr };
     bool _expectsAnswer{ false };
 };

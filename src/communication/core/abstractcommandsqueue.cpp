@@ -3,6 +3,7 @@
 #include <QDebug>
 
 #include "communication/commands/command.h"
+#include "communication/commands/idbasedheader.h"
 
 // #define DISPLAY_COMMANDS 1
 
@@ -23,9 +24,14 @@ AbstractCommandsQueue::~AbstractCommandsQueue()
     }
 }
 
-Command* AbstractCommandsQueue::makeCommand(const quint32& id, int timeout)
+Command* AbstractCommandsQueue::makeCommand(const quint32 id, const int timeout)
 {
-    return new Command(makeNewHeader(id), timeout == 0 ? _defaultTimeout : timeout, this);
+    Command* command = makeCommandImpl(makeHeader(id));
+    if (timeout >= 0)
+    {
+        command->setTimeout(timeout == 0 ? _defaultTimeout : timeout);
+    }
+    return command;
 }
 
 void AbstractCommandsQueue::append(Command* command)
@@ -69,9 +75,9 @@ void AbstractCommandsQueue::cancelCurrentCommand()
     }
 }
 
-const CommandHeader* AbstractCommandsQueue::makeNewHeader(const quint32& commandId)
+Command* AbstractCommandsQueue::makeCommandImpl(CommandHeader* header)
 {
-    return new CommandHeader(commandId);
+    return new Command(header, this);
 }
 
 void AbstractCommandsQueue::onCommandReceived(Command* command)
@@ -91,14 +97,14 @@ void AbstractCommandsQueue::onCommandReceived(Command* command)
 
     emit commandReceived(command);
 
-    if (command->expectsAnswer() && ! command->hasData(CommandDataType::Answer))
+    if (command->expectsAnswer())
     {
         // The command expects a later answer : delete it when it has been set
         connect(command, &Command::answerReceived, command, &Command::deleteLater);
     }
     else
     {
-        // The command has been answered already, or does not expect an answer : delete it now
+        // The command does not expect an answer : delete it now
         command->deleteLater();
     }
 }

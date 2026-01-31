@@ -4,59 +4,55 @@
 
 #include "bitfield.h"
 #include "communication/commands/command.h"
-#include "communication/core/abstractcommanddatastreamer.h"
 
 
 AbstractDeviceCommandsQueue::AbstractDeviceCommandsQueue(
-    AbstractCommandDataStreamer* streamer,
     QIODevice* device,
     bool parallelCommands,
     int defaultTimeout,
     QObject* parent,
     const bool& logRawData)
     : AbstractCommandsQueue(parallelCommands, defaultTimeout, parent)
-    , _streamer(streamer)
     , _device(device)
     , _logRawData(logRawData)
 {
-    _streamer->setParent(this);
-
     connect(_device, &QIODevice::readyRead, this, &AbstractDeviceCommandsQueue::onReadyRead);
     connect(_device, &QIODevice::bytesWritten, this, &AbstractDeviceCommandsQueue::onDeviceBytesWritten);
 }
 
 bool AbstractDeviceCommandsQueue::sendCommandImpl(Command* command, CommandDataType::Enum dataType)
 {
-    bool success = false;
-
-    bool dataPresent = false;
-    QList<QVariant> userData = command->getData(dataType, &dataPresent);
-    if (Q_LIKELY(dataPresent))
+    std::optional<QByteArray> commandRawData = command->streamData(dataType);
+    if (! commandRawData.has_value())
     {
-        QByteArray commandRawData = _streamer->streamCommandData(command->getId(), userData, dataType);
-
-        QByteArray rawDataSend = streamCommandData(command->getHeader(), commandRawData);
-        if (Q_LIKELY(! rawDataSend.isEmpty()))
-        {
-            if (_logRawData)
-            {
-                qDebug() << "Sending" << BitField::toHex(rawDataSend, ':', 16) << command;
-            }
-
-            qint64 bytesWritten = _device->write(rawDataSend);
-            success = bytesWritten == rawDataSend.size();
-            if (! success)
-            {
-                qWarning() << "Wrote" << bytesWritten << "instead of" << rawDataSend.size();
-            }
-        }
+        qWarning() << "Could not stream data of command" << command;
+        return false;
     }
-    else
+
+    bool success = false;
+    QByteArray rawDataSend = streamCommandData(command->getHeader(), *commandRawData);
+    if (Q_LIKELY(! rawDataSend.isEmpty()))
     {
-        qCritical() << "Data" << dataType << "for command" << command << "has not ben set";
+        if (_logRawData)
+        {
+            qDebug() << "Sending" << BitField::toHex(rawDataSend, ':', 16) << command;
+        }
+
+        qint64 bytesWritten = _device->write(rawDataSend);
+        success = bytesWritten == rawDataSend.size();
+        if (! success)
+        {
+            qWarning() << "Wrote" << bytesWritten << "instead of" << rawDataSend.size();
+        }
     }
 
     return success;
+}
+
+Command* AbstractDeviceCommandsQueue::makeRequestCommand(const CommandHeader* header)
+{
+    Q_UNUSED(header);
+    return nullptr;
 }
 
 void AbstractDeviceCommandsQueue::fixBufferStandard(
@@ -109,15 +105,24 @@ void AbstractDeviceCommandsQueue::fixBufferStandard(
     }
 }
 
-Command* AbstractDeviceCommandsQueue::matchAnsweredCommandBasic(const CommandHeader* header)
+Command* AbstractDeviceCommandsQueue::matchAnsweredCommand(const CommandHeader* header)
 {
-    if (! getCommands().isEmpty())
+    QVector<Command*> candidate_commands;
+    if (handleParallelCommands())
     {
-        Command* currentCommand = getCommands().head();
-        if (currentCommand->getId() == header->getId())
+        candidate_commands = getCommands().toVector();
+    }
+    else if (! getCommands().empty())
+    {
+        candidate_commands.push_back(getCommands().head());
+    }
+
+    for (Command* candidate_command : candidate_commands)
+    {
+        if (candidate_command->getHeader()->matches(header))
         {
             // Ok, this is the answer we were waiting for
-            return currentCommand;
+            return candidate_command;
         }
     }
 
@@ -168,24 +173,33 @@ void AbstractDeviceCommandsQueue::treatCommandData(const CommandHeader* header, 
 {
     Command* command = matchAnsweredCommand(header);
     CommandDataType::Enum dataType;
-    QList<QVariant> dataSend;
     if (command)
     {
         // This is an existing command being answered
         dataType = CommandDataType::Answer;
-        dataSend = command->getData(CommandDataType::Request);
     }
     else
     {
         // This is a new request
         dataType = CommandDataType::Request;
-        command = new Command(header, 0, this);
+        command = makeRequestCommand(header);
+        if (! command)
+        {
+            qWarning() << "Unable to create request command for header" << header;
+            return;
+        }
     }
 
-    command->setData(dataType, _streamer->unstreamCommandData(header->getId(), commandRawData, dataType, dataSend));
-
-    if (dataType == CommandDataType::Request)
+    if (command->unstreamCommandData(commandRawData, dataType))
     {
-        onCommandReceived(command);
+        if (dataType == CommandDataType::Request)
+        {
+            onCommandReceived(command);
+        }
+    }
+    else
+    {
+        qWarning() << "Error when parsing data for command" << command;
+        command->manualFail();
     }
 }

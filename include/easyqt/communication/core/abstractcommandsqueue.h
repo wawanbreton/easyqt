@@ -36,7 +36,7 @@ public:
      *  @param timeout The command answering timeout : <0 for no timeout,
      *                                                 =0 for default timeout
      *                                                 >0 for a specific timeout */
-    Command* makeCommand(const quint32& id, int timeout);
+    Command* makeCommand(const quint32 id, const int timeout);
 
     void append(Command* command);
 
@@ -47,6 +47,11 @@ public:
 
     void cancelCurrentCommand();
 
+    bool handleParallelCommands() const
+    {
+        return _parallelCommands;
+    }
+
 signals:
     void queueChanged(const bool& queueEmpty);
 
@@ -55,7 +60,9 @@ signals:
     void commandError();
 
 protected:
-    virtual const CommandHeader* makeNewHeader(const quint32& commandId);
+    virtual Command* makeCommandImpl(CommandHeader* header);
+
+    virtual CommandHeader* makeHeader(const quint32 commandId) const = 0;
 
     virtual bool sendCommandImpl(Command* command, CommandDataType::Enum dataType) = 0;
 

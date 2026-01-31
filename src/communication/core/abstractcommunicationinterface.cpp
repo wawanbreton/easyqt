@@ -42,26 +42,47 @@ void AbstractCommunicationInterface::cancelCurrentCommand()
     _queue->cancelCurrentCommand();
 }
 
-void AbstractCommunicationInterface::sendRequest(
-    const quint32& id,
-    const QList<QVariant>& dataRequest,
-    QObject* receiver,
-    const SlotAnswerType& slotAnswer,
-    const SlotNoArgType& slotError,
-    const SlotNoArgType& slotSent,
-    const int& timeout)
+Command* AbstractCommunicationInterface::makeRequest(const quint32 id, const int timeout)
 {
-    return sendCommandImpl(id, dataRequest, receiver, slotAnswer, slotError, slotSent, timeout > 0 ? timeout : 0, true);
+    return _queue->makeCommand(id, timeout);
 }
 
-void AbstractCommunicationInterface::sendEvent(
-    const quint32& id,
-    const QList<QVariant>& dataRequest,
+Command* AbstractCommunicationInterface::makeEvent(const quint32 id)
+{
+    return _queue->makeCommand(id, -1);
+}
+
+void AbstractCommunicationInterface::sendRequest(
+    Command* command,
     QObject* receiver,
     const SlotNoArgType& slotError,
     const SlotNoArgType& slotSent)
 {
-    return sendCommandImpl(id, dataRequest, receiver, nullptr, slotError, slotSent, -1, false);
+    return sendCommand(command, receiver, slotError, slotSent, true);
+}
+
+void AbstractCommunicationInterface::sendRequestEmptyAnswer(
+    Command* command,
+    QObject* receiver,
+    const SlotNoArgType& slotAnswer,
+    const SlotNoArgType& slotError,
+    const SlotNoArgType& slotSent)
+{
+    if (receiver && slotAnswer)
+    {
+        connect(command, &Command::answerReceived, receiver, slotAnswer);
+    }
+
+    sendRequest(command, receiver, slotError, slotSent);
+}
+
+void AbstractCommunicationInterface::sendEvent(
+    Command* command,
+    QObject* receiver,
+    const SlotNoArgType& slotError,
+    const SlotNoArgType& slotSent)
+{
+    return sendCommand(command, receiver, slotError, slotSent, false);
 }
 
 bool AbstractCommunicationInterface::onCommandReceivedImpl(Command* command)
@@ -75,46 +96,26 @@ void AbstractCommunicationInterface::onCommandReceived(Command* command)
     command->setExpectsAnswer(onCommandReceivedImpl(command));
 }
 
-void AbstractCommunicationInterface::sendCommandImpl(
-    const quint32& id,
-    const QList<QVariant>& dataRequest,
+void AbstractCommunicationInterface::sendCommand(
+    Command* command,
     QObject* receiver,
-    const SlotAnswerType& slotAnswer,
     const SlotNoArgType& slotError,
     const SlotNoArgType& slotSent,
-    const int& timeout,
-    const bool& expectsAnswer)
+    const bool expectsAnswer)
 {
-    Command* command = _queue->makeCommand(id, timeout);
-    if (command)
-    {
-        command->setData(CommandDataType::Request, dataRequest);
-        command->setExpectsAnswer(expectsAnswer);
+    command->setExpectsAnswer(expectsAnswer);
 
-        if (receiver)
+    if (receiver)
+    {
+        if (slotSent)
         {
-            if (slotAnswer)
-            {
-                connect(command, &Command::answerReceived, receiver, slotAnswer);
-            }
-            if (slotSent)
-            {
-                connect(command, &Command::sent, receiver, slotSent);
-            }
-            if (slotError)
-            {
-                connect(command, &Command::error, receiver, slotError);
-            }
+            connect(command, &Command::sent, receiver, slotSent);
         }
-
-        _queue->append(command);
-    }
-    else
-    {
-        qWarning() << "Unable to build command with id" << command;
         if (slotError)
         {
-            QTimer::singleShot(0, receiver, slotError);
+            connect(command, &Command::error, receiver, slotError);
         }
     }
+
+    _queue->append(command);
 }

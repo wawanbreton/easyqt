@@ -5,8 +5,6 @@
 #include "easyqt/communication/core/abstractcommandsqueue.h"
 #include "easyqt/communication/dataparseresult.h"
 
-class AbstractCommandDataStreamer;
-
 
 /*! @brief Abstract class that manages commands sent through a QIODevice. The commands can be
  *         serialized/deseralized, and the content will be sent through the device. It is the basis
@@ -17,7 +15,6 @@ class AbstractDeviceCommandsQueue : public AbstractCommandsQueue
 
 public:
     explicit AbstractDeviceCommandsQueue(
-        AbstractCommandDataStreamer* streamer,
         QIODevice* device,
         bool parallelCommands,
         int defaultTimeout,
@@ -37,6 +34,12 @@ public:
     virtual bool sendCommandImpl(Command* command, CommandDataType::Enum dataType) override;
 
 protected:
+    /*! @brief Create the appropriate request command when the given header has been received and no actual request
+     *         could be matched to it
+     *  @param header The received header
+     *  @return The appropriate request command, or null if this header is not recognized */
+    virtual Command* makeRequestCommand(const CommandHeader* header);
+
     /*! @brief Children classes should implement this method to generate the full data to be
      *         sent to the device (by adding headers and footers for example)
      *  @param header The header of the command to be send
@@ -71,9 +74,7 @@ protected:
      *         waiting for an answer, for which the given header could be the answser
      *  @param header The received command header
      *  @return The existing command matching the answer, or nullptr if there is none */
-    virtual Command* matchAnsweredCommand(const CommandHeader* header) = 0;
-
-    Command* matchAnsweredCommandBasic(const CommandHeader* header);
+    Command* matchAnsweredCommand(const CommandHeader* header);
 
     virtual void onDeviceBytesWritten()
     {
@@ -87,7 +88,6 @@ private:
     void treatCommandData(const CommandHeader* header, const QByteArray& commandRawData);
 
 private:
-    AbstractCommandDataStreamer* const _streamer{ nullptr };
     QIODevice* const _device{ nullptr };
     const bool _logRawData;
     QByteArray _buffer;

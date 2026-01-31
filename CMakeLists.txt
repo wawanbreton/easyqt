@@ -15,9 +15,10 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_library(easyqt SHARED
-    include/easyqt/communication/commands/commandheader.h
     include/easyqt/communication/commands/command.h src/communication/commands/command.cpp
-    include/easyqt/communication/core/abstractcommanddatastreamer.h src/communication/core/abstractcommanddatastreamer.cpp
+    include/easyqt/communication/commands/commandheader.h src/communication/commands/commandheader.cpp
+    include/easyqt/communication/commands/idbasedheader.h src/communication/commands/idbasedheader.cpp
+
     include/easyqt/communication/core/abstractcommandsqueue.h src/communication/core/abstractcommandsqueue.cpp
     include/easyqt/communication/core/abstractcommunicationinterface.h src/communication/core/abstractcommunicationinterface.cpp
     include/easyqt/communication/core/abstractdevicecommandsqueue.h src/communication/core/abstractdevicecommandsqueue.cpp

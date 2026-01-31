@@ -16,28 +16,20 @@ bool AbstractSimulatedCommandsQueue::sendCommandImpl(Command* command, CommandDa
 {
     if (dataType == CommandDataType::Request)
     {
-        if (command->expectsAnswer())
-        {
-            QTimer::singleShot(
-                _delay,
-                this,
-                [this, command]()
+        QTimer::singleShot(
+            _delay,
+            this,
+            [this, command]()
+            {
+                if (command->expectsAnswer())
                 {
                     processCommand(command);
-                });
-        }
-        else
-        {
-            const quint32 id = command->getId();
-            const QList<QVariant> requestData = command->getRequestData();
-            QTimer::singleShot(
-                _delay,
-                this,
-                [this, id, requestData]()
+                }
+                else
                 {
-                    processEvent(id, requestData);
-                });
-        }
+                    processEvent(command);
+                }
+            });
         return true;
     }
 

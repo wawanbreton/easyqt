@@ -19,7 +19,7 @@ public:
 protected:
     virtual void processCommand(Command* command) = 0;
 
-    virtual void processEvent(quint32 id, const QList<QVariant>& requestData) = 0;
+    virtual void processEvent(const Command* command) = 0;
 
 private:
     const std::chrono::milliseconds _delay;

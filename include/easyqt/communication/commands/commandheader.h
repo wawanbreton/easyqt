@@ -1,19 +1,24 @@
 #pragma once
 
-#include <QtGlobal>
+#include <QObject>
 
-class CommandHeader
+#warning verifier les constructions/destructions, et/ou utiliser un shared_ptr
+class CommandHeader : public QObject
 {
-    public:
-        CommandHeader(const quint32 &id) :
-            _id(id)
-        { }
+public:
+    explicit CommandHeader(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+    }
 
-        // Required to mark the class as polymorphic
-        virtual ~CommandHeader() = default;
+    // Required to mark the class as polymorphic
+    virtual ~CommandHeader() = default;
 
-        const quint32 &getId() const { return _id; }
+    virtual bool matches(const CommandHeader* other) const = 0;
 
-    private:
-        const quint32 _id;
+    virtual std::optional<QByteArray> streamData() const = 0;
+
+    virtual QString toString() const = 0;
+
+    friend QDebug operator<<(QDebug dbg, const CommandHeader* header);
 };

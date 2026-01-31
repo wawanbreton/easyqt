@@ -42,6 +42,10 @@ public:
 
     virtual void cancelCurrentCommand();
 
+    Command* makeRequest(const quint32 id, const int timeout = 0);
+
+    Command* makeEvent(const quint32 id);
+
 protected:
     /*! @brief Constructor
      *  @param queue The object holding the commands queue
@@ -58,17 +62,19 @@ protected:
      *  @param slotError Slot to be called when an error occurs while sending the command.
      *                   It should take no argument.
      *  @param slotSent Slot to be called when the command has been sent.
-     *                  It should take no argument.
-     *  @param timeout The command answering timeout : <=0 for default timeout,
-     *                                               or >0 for a specific timeout */
+     *                  It should take no argument. */
     void sendRequest(
-        const quint32& id,
-        const QList<QVariant>& dataRequest = QList<QVariant>(),
+        Command* command,
         QObject* receiver = nullptr,
-        const SlotAnswerType& slotAnswer = nullptr,
         const SlotNoArgType& slotError = nullptr,
-        const SlotNoArgType& slotSent = nullptr,
-        const int& timeout = 0);
+        const SlotNoArgType& slotSent = nullptr);
+
+    void sendRequestEmptyAnswer(
+        Command* command,
+        QObject* receiver = nullptr,
+        const SlotNoArgType& slotAnswer = nullptr,
+        const SlotNoArgType& slotError = nullptr,
+        const SlotNoArgType& slotSent = nullptr);
 
     /*! @brief Pushes a new event to the queue, and sent it as soon as possible. An event is a
      *         command for which an answer is not expected.
@@ -80,8 +86,7 @@ protected:
      *  @param slotSent Slot to be called when the command has been sent.
      *                  It should take no argument. */
     void sendEvent(
-        const quint32& id,
-        const QList<QVariant>& dataRequest = QList<QVariant>(),
+        Command* command,
         QObject* receiver = nullptr,
         const SlotNoArgType& slotError = nullptr,
         const SlotNoArgType& slotSent = nullptr);
@@ -112,15 +117,12 @@ private:
      *                                                 >0 for a specific timeout
      *  @param expectsAnswer Indicates whether the commands expects and answer (it is a
      *                       request/answer) or not (it is an event) */
-    void sendCommandImpl(
-        const quint32& id,
-        const QList<QVariant>& dataRequest,
+    void sendCommand(
+        Command* command,
         QObject* receiver,
-        const SlotAnswerType& slotAnswer,
         const SlotNoArgType& slotError,
         const SlotNoArgType& slotSent,
-        const int& timeout,
-        const bool& expectsAnswer);
+        const bool expectsAnswer);
 
 private:
     AbstractCommandsQueue* const _queue{ nullptr };
